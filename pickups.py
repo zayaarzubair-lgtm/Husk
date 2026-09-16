@@ -10,6 +10,7 @@ import pygame
 
 from .core import Entity, Layer, shade, tint
 from .config import C
+from . import art
 
 
 class Pickup(Entity):
@@ -64,6 +65,8 @@ class Pickup(Entity):
             return
 
         if self.kind == "stairs":
+            if art.draw_pickup(surface, "stairs", (x, int(sp.y))):
+                return
             rect = pygame.Rect(x - 22, y - 22, 44, 44)
             pygame.draw.rect(surface, shade(col, 0.35), rect, border_radius=6)
             pygame.draw.rect(surface, col, rect, 3, border_radius=6)
@@ -72,6 +75,10 @@ class Pickup(Entity):
                 pygame.draw.line(surface, col, (x - 13 + i * 4, yy), (x + 14, yy), 3)
             return
 
+        # a soft glow under the item so it reads on any floor
+        pygame.draw.circle(surface, shade(col, 0.25), (x, int(sp.y) + 10), r)
+        if art.draw_pickup(surface, self.kind, (x, y)):
+            return
         pygame.draw.circle(surface, shade(col, 0.3), (x, y), r + 3)
         pygame.draw.circle(surface, col, (x, y), r, 2)
         if self.kind == "health":

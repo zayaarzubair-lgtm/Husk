@@ -18,7 +18,7 @@ from .config import (C, PossessionStats, PoisonStats, RelicStats, RELICS_BY_KEY,
 from .relics import ABILITY_COOLDOWN
 
 R_BUFF = RelicStats().buff_time
-from . import lore
+from . import lore, art
 
 POISON_C = PoisonStats().color
 
@@ -95,6 +95,10 @@ class HUD:
         cx = self.viewport[0] // 2
         if self.cap_t > 0:
             a = self._fade(self.cap_t, self.cap_len)
+            tw = max(self.f_mid.size(self.cap_title)[0], self.f.size(self.cap_sub)[0]) + 40
+            back = pygame.Surface((tw, 58), pygame.SRCALPHA)
+            back.fill((8, 9, 13, int(160 * a)))
+            surf.blit(back, (cx - tw // 2, 134))
             self._text(surf, self.cap_title, (cx, 148), self.f_mid,
                        shade(self.cap_col, 0.25 + 0.75 * a), center=True)
             if self.cap_sub:
@@ -102,6 +106,10 @@ class HUD:
                            shade(C.TEXT_DIM, 0.25 + 0.75 * a), center=True)
         if self.whisper_t > 0:
             a = self._fade(self.whisper_t, self.whisper_len, 0.8)
+            tw = self.f.size(self.whisper_text)[0] + 28
+            back = pygame.Surface((tw, 24), pygame.SRCALPHA)
+            back.fill((8, 9, 13, int(170 * a)))
+            surf.blit(back, (cx - tw // 2, self.viewport[1] - 108))
             self._text(surf, self.whisper_text, (cx, self.viewport[1] - 96), self.f,
                        shade(C.TEXT_DIM, 0.2 + 0.8 * a), center=True)
 
@@ -195,8 +203,11 @@ class HUD:
             active = member is game.player_actor
             pygame.draw.rect(surf, shade(member.body.color, 0.35), box, border_radius=4)
             fh = int(26 * member.health_frac)
-            pygame.draw.rect(surf, member.body.color,
+            pygame.draw.rect(surf, shade(member.body.color, 0.8),
                              (box.x + 1, box.bottom - 1 - fh, 26, fh), border_radius=3)
+            face = art.portrait(member.body, 24)
+            if face is not None:
+                surf.blit(face, (box.x + 2, box.y + 1))
             pygame.draw.rect(surf, C.TEXT if active else (60, 66, 82), box,
                              2 if active else 1, border_radius=4)
         self._text(surf, "Q swap", (rx + cap * 34 + 8, ry + 8), self.f_small, C.TEXT_DIM)

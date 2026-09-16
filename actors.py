@@ -24,7 +24,7 @@ from .core import (Entity, Layer, Signal, move_toward, from_angle,
                    resolve_circle_rects, shade, tint, clamp, lerp)
 from .config import (C, CombatStats, PossessionStats, WitchTimeStats, EliteStats,
                      PoisonStats)
-from . import weapons
+from . import weapons, art
 
 COMBAT = CombatStats()
 POSSESS = PossessionStats()
@@ -121,6 +121,8 @@ class Actor(Entity):
         self.summon_points = []          # world points — drawn as marks on a windup
         self.summoner = None             # the boss that called this body in, if any
         self.occupied = False            # lore: a body something else won't give up
+
+        self.anim_t = 0.0                # drives sprite frames; world time, so slow-mo slows it
 
         # status
         self.poison_t = 0.0
@@ -240,6 +242,7 @@ class Actor(Entity):
             return
 
         self._tick_timers(delta)
+        self.anim_t += delta
         if self.poison_t > 0.0:
             self._tick_poison(delta, ctx)
             if not self.alive:
@@ -622,7 +625,34 @@ class Actor(Entity):
                 pygame.draw.circle(surface, C.BAD, (int(q.x), int(q.y)), max(2, int(5 * t)))
 
         self._draw_trail(surface, camera)
+        self._draw_telegraph(surface, sp)
+        if self.body.elite:
+            # the elite ring rides on the BODY, so it follows a possession
+            pygame.draw.circle(surface, ELITE.color, (int(sp.x), int(sp.y)), r + 5, 2)
 
+        tip = art.draw_body(surface, self, sp, self._art_effects())
+        if tip is None:
+            tip = self._draw_placeholder(surface, sp, r, col)
+        self._draw_overlays(surface, camera, sp, r, tip)
+
+    def _art_effects(self):
+        """How the sprite should be tinted this frame — the same cues the
+        placeholder circles used, as sprite effects."""
+        fx = {"mine": self.faction == "player"}
+        if self.flash > 0 or self._beep_flash > 0:
+            fx["white"] = True
+        elif self.possess_channel > 0:
+            fx["tint"] = (0.6, C.UPGRADE)
+        elif self.poison_t > 0:
+            pulse = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() * 0.012)
+            fx["tint"] = (0.25 + 0.3 * pulse, POISON.color)
+        if self.invuln_t > 0 and self.faction == "player" and self.flash <= 0:
+            fx["fade"] = 0.55 + 0.25 * math.sin(self.invuln_t * 44.0)
+        return fx
+
+    def _draw_placeholder(self, surface, sp, r, col):
+        """The pre-art look: a circle and a barrel. Used for any body art.py
+        has no design for."""
         if self.possess_channel > 0:
             col = tint(col, C.UPGRADE, 0.6)
         if self._beep_flash > 0:
@@ -636,11 +666,6 @@ class Actor(Entity):
             # i-frame shimmer, so "why didn't that hurt" is always answerable
             col = tint(col, C.BG, 0.35 + 0.25 * math.sin(self.invuln_t * 44.0))
 
-        self._draw_telegraph(surface, sp)
-        if self.body.elite:
-            # the elite ring rides on the BODY, so it follows a possession
-            pygame.draw.circle(surface, ELITE.color, (int(sp.x), int(sp.y)), r + 5, 2)
-
         pygame.draw.circle(surface, shade(col, 0.55), (int(sp.x), int(sp.y)), r)
         pygame.draw.circle(surface, col, (int(sp.x), int(sp.y)), max(1, r - 3))
         pygame.draw.circle(surface, tint(col, (255, 255, 255), 0.5),
@@ -651,7 +676,9 @@ class Actor(Entity):
         pygame.draw.line(surface, shade(col, 0.35), (sp.x, sp.y), (tip.x, tip.y), 6)
         pygame.draw.line(surface, tint(col, (255, 255, 255), 0.35),
                          (sp.x, sp.y), (tip.x, tip.y), 2)
+        return tip
 
+    def _draw_overlays(self, surface, camera, sp, r, tip):
         wp = self.weak_point
         if wp is not None:
             # The weak point is always shown — the skill is getting to it.

@@ -17,6 +17,7 @@ Module map, and what each becomes in Godot 4 (GAME-CONCEPT.md §4):
     pickups.py      Pickup              → Area2D with body_entered
     relics.py       boss rewards        → Resources + a RelicManager autoload
     lore.py         the story's text    → a Resource / CSV for localisation
+    art.py          sprites & textures  → SpriteFrames, TileMapLayer, prop scenes
     hud.py          HUD                 → CanvasLayer + Control
     app.py          Game                → Main scene + the engine loop
 

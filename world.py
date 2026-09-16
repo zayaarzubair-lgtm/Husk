@@ -18,6 +18,7 @@ import random
 import pygame
 from pygame.math import Vector2
 
+from . import art
 from .config import (C, DungeonStats, EliteStats, SPAWN_TABLE, ARCHETYPES,
                      MAX_ROOM_ENEMIES, BOSS_BY_DEPTH)
 
@@ -43,6 +44,7 @@ class Room:
         self.visited = False
         self.spawned = False
         self.decals = []                  # permanent floor smears; rooms own them
+        self.depth = 0                    # set by Floor; picks the room's look
 
     # -- doors ---------------------------------------------------------------
     def door_zone(self, side) -> pygame.Rect:
@@ -84,6 +86,10 @@ class Room:
 
     # -- drawing -------------------------------------------------------------
     def draw(self, surface, camera):
+        art.draw_room(surface, self, camera)
+
+    def draw_placeholder(self, surface, camera):
+        """The pre-art room: flat floor, grid, grey crates."""
         ox, oy = camera.offset.x, camera.offset.y
         vis = camera.visible_rect()
 
@@ -196,6 +202,7 @@ class Floor:
                     "boss" if c == self.boss else
                     "treasure" if c == treasure else "combat")
             self.rooms[c] = Room(c[0], c[1], kind, self.ds)
+            self.rooms[c].depth = self.depth
 
         # Connect every pair of adjacent rooms — loops make a floor feel like a
         # place rather than a corridor.
