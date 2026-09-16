@@ -1,0 +1,25 @@
+{
+  // This folder is the `husk` PACKAGE, not the project root. The project root
+  // (main.py, tests/, .venv) is the parent folder, so every launch runs there.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Play HUSK",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/../main.py",
+      "cwd": "${workspaceFolder}/..",
+      "python": "${workspaceFolder}/../.venv/bin/python",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Run tests",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/../tests/test_husk.py",
+      "cwd": "${workspaceFolder}/..",
+      "python": "${workspaceFolder}/../.venv/bin/python",
+      "console": "integratedTerminal"
+    }
+  ]
+}
